@@ -1,0 +1,61 @@
+# Generic command-based example config.
+#
+# This example is intentionally non-CUDA-specific and demonstrates the
+# recommended `run.cmd` launch style for new configs.
+
+version: 1
+
+project:
+  name: python-smoke
+  workspace: .
+
+build:
+  configure_cmd:
+    - python
+    - -c
+    - "print('configure-ok')"
+  build_cmd:
+    - python
+    - -c
+    - "print('build-ok')"
+
+test:
+  enabled: true
+  cmd:
+    - python
+    - -c
+    - "print('test-ok')"
+
+storage:
+  root: ./runs
+
+policy:
+  min_pass_rate: 1.0
+
+targets:
+  benchmark:
+    description: Minimal command-based smoke benchmark.
+    run:
+      cmd:
+        - python
+        - -c
+        - "print('STATUS: PASS'); print('TIME_MS: 12.5')"
+      runs: 3
+      warmup_runs: 1
+    parse:
+      kind: regex
+      rules:
+        - name: status
+          pattern: "STATUS:\\s*(PASS|FAIL)"
+          type: enum
+          enum: ["PASS", "FAIL"]
+          required: true
+        - name: time_ms
+          pattern: "TIME_MS:\\s*([0-9.]+)"
+          type: float
+          units: ms
+          better: lower
+          required: true
+    success:
+      exit_code: 0
+      pass_rule: status

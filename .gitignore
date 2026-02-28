@@ -1,0 +1,28 @@
+
+# Python virtual environment
+.venv/
+
+# VSCode project settings
+.vscode/
+
+# packaging metadata
+*.egg-info/
+**/*.egg-info/
+
+# caches/build artifacts
+__pycache__/
+*.pyc
+.pytest_cache/
+.pytest_tmp/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# output
+runs/
+examples/runs/
+fixtures/*/runs/
+fixtures/node_smoke/dist/
+fixtures/node_smoke/node_modules/

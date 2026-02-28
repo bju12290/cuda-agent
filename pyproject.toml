@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cuda-agent"
+version = "0.1.0"
+description = "Config-driven build, test, benchmark, compare, and reporting runner for local software projects."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+  { name = "Brian P Hartnett Jr.", email = "brian@bphdev.com" }
+]
+dependencies = [
+  "PyYAML>=6.0",
+]
+
+keywords = ["benchmark", "performance", "validation", "cuda", "cli", "sqlite"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Operating System :: Microsoft :: Windows",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Software Development :: Testing",
+  "Topic :: System :: Benchmark",
+]
+
+# license = { file = "LICENSE" }
+
+[project.scripts]
+cuda-agent = "cuda_agent.cli.main:main"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8",
+  "ruff>=0.6",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

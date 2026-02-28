@@ -1,0 +1,68 @@
+version: 1
+
+project:
+  name: node-smoke
+  workspace: .
+
+env:
+  BENCH_PROFILE: slow
+
+build:
+  configure_cmd:
+    - node
+    - -e
+    - "console.log('configure-ok', process.version)"
+  build_cmd:
+    - npm.cmd
+    - run
+    - --silent
+    - build
+
+test:
+  enabled: true
+  cmd:
+    - npm.cmd
+    - run
+    - --silent
+    - test
+
+storage:
+  root: ./runs
+
+policy:
+  min_pass_rate: 1.0
+
+targets:
+  benchmark:
+    description: Minimal Node.js benchmark fixture driven by run.cmd.
+    run:
+      cmd:
+        - npm.cmd
+        - run
+        - --silent
+        - bench
+      runs: 3
+      warmup_runs: 1
+    parse:
+      kind: regex
+      rules:
+        - name: status
+          pattern: "STATUS:\\s*(PASS|FAIL)"
+          type: enum
+          enum: ["PASS", "FAIL"]
+          required: true
+        - name: ops_per_sec
+          pattern: "OPS_PER_SEC:\\s*([0-9.]+)"
+          type: float
+          units: ops_per_sec
+          better: higher
+          required: true
+        - name: latency_ms
+          pattern: "LATENCY_MS:\\s*([0-9.]+)"
+          type: float
+          units: ms
+          better: lower
+          required: true
+    success:
+      exit_code: 0
+      pass_rule: status

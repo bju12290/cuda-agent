@@ -1,0 +1,117 @@
+# CUDA Agent (v1) annotated config template
+#
+# Interpolation (v1):
+#   - You may reference other config values inside strings using: ${path.to.value}
+#   - References resolve against THIS config (after YAML load), single-pass only.
+#   - Referenced values must be scalar: string/int/float/bool (not dict/list).
+#   - Escape a literal placeholder with a backslash: \${not.interpreted}
+#   - Interpolation applies to VALUES only (not YAML keys).
+#
+# Required sections for v1 to run:
+#   - version == 1
+#   - project.workspace
+#   - build.configure_cmd, build.build_cmd
+#   - storage.root
+#   - targets: one or more target definitions
+#     - each target must include exactly one of run.exe_glob or run.cmd
+#     - parse is optional; when present, only kind: regex is supported in v1
+#
+# Schema note:
+#   - The schema is intentionally generic even though this file is CUDA-samples-specific.
+#   - Language/toolchain specifics belong in commands and target definitions.
+#   - Future multi-language support should extend the same core model rather than add separate top-level language sections by default.
+#   - Prefer run.cmd for new configs; this sample uses run.exe_glob because it is executable-first.
+#   - This file is a documented template/example; use ../cuda_samples.yaml as the primary runnable CUDA config in this repo.
+
+version: 1  # Config format version (must be 1 for this project).
+
+project:
+  name: cuda-samples              # Optional label for reports/logs
+  workspace: .                    # REQUIRED. Repo root (relative or absolute).
+
+env:
+  # Optional: environment variables applied to ALL commands (build/test/run).
+  # Useful for pinning CUDA_PATH, PATH tweaks, etc.
+  # Example:
+  # CUDA_PATH: "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v13.1"
+  # PATH: "C:/something/bin;${env.PATH}"  # (env expansion not supported in v1)
+
+build:
+  build_dir: build-ninja          # Optional convenience variable for interpolation.
+  configure_cmd:                  # REQUIRED. Command to generate the build system (CMake configure step).
+    - cmake
+    - -S
+    - "${project.workspace}"      # Source directory (repo root)
+    - -B
+    - "${build.build_dir}"        # Build directory (single source of truth)
+    - -G
+    - Ninja
+    - -DCMAKE_BUILD_TYPE=Release
+    - -DCMAKE_CUDA_ARCHITECTURES=75   # RTX 2060 Super = 7.5
+  build_cmd:                      # REQUIRED. Command to build (CMake build step).
+    - cmake
+    - --build
+    - "${build.build_dir}"
+
+test:
+  enabled: false                  # Optional in v1. Placeholder for future test hooks (ctest, etc.).
+  cmd: []                         # Example later: ["ctest", "--test-dir", "${build.build_dir}"]
+
+storage:
+  root: ./runs                    # REQUIRED. Where run artifacts + reports are written.
+  db: "${storage.root}/runs.db"   # Optional in v1. Reserved for indexing (SQLite) later.
+
+policy:
+  fail_fast: true                 # Stop on first failure.
+  min_pass_rate: 1.0              # Fraction of runs that must pass (1.0 = 100%).
+
+targets:
+  # Target ids are arbitrary. This file defines two CUDA sample targets.
+
+  deviceQuery:
+    description: >
+      Sanity check: confirms the CUDA runtime can see the GPU and execute.
+      This is primarily a toolchain/driver smoke test.
+    run:
+      exe_glob: "${build.build_dir}/**/deviceQuery*.exe" # REQUIRED. Glob to locate the built executable.
+      args: []                                           # Optional: additional CLI args.
+      runs: 1                                            # deviceQuery is a single-run check.
+      warmup_runs: 0
+    success:
+      exit_code: 0                                       # Expected process exit code.
+
+  matrixMul:
+    description: >
+      Headless benchmark with built-in correctness check.
+      Parses kernel time (ms) and GFLOP/s from stdout.
+      (CUDA samples warn they are not strict perf benchmarks; treat as relative.)
+    run:
+      exe_glob: "${build.build_dir}/**/matrixMul.exe"   # REQUIRED.
+      args: []
+      runs: 10                                           # Repeat to get stable-ish stats.
+      warmup_runs: 1                                     # One warmup to reduce first-run overhead.
+    parse:
+      kind: regex                                        # Optional. v1 supports only "regex".
+      rules:
+        - name: gflops
+          pattern: "Performance=\\s*([0-9.]+)\\s*GFlop/s"
+          type: float
+          units: gflops
+          better: higher
+          required: true
+
+        - name: kernel_ms
+          pattern: "Time=\\s*([0-9.]+)\\s*msec"
+          type: float
+          units: ms
+          better: lower
+          required: true
+
+        - name: result
+          pattern: "Result\\s*=\\s*(PASS|FAIL)"
+          type: enum
+          enum: ["PASS", "FAIL"]
+          required: true
+    success:
+      exit_code: 0
+      pass_rule: result

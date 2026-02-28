@@ -1,0 +1,74 @@
+# Generic Node.js / JavaScript example config.
+#
+# This example demonstrates a real script-driven workflow using the
+# recommended `run.cmd` launch style. It assumes a project with typical
+# npm scripts such as:
+#
+#   "scripts": {
+#     "build": "vite build",
+#     "test": "vitest run",
+#     "bench": "node scripts/benchmark.js"
+#   }
+
+version: 1
+
+project:
+  name: node-benchmark
+  workspace: .
+
+build:
+  configure_cmd:
+    - npm
+    - ci
+  build_cmd:
+    - npm
+    - run
+    - build
+
+test:
+  enabled: true
+  cmd:
+    - npm
+    - test
+    - --
+    - --runInBand
+
+storage:
+  root: ./runs
+
+policy:
+  min_pass_rate: 1.0
+
+targets:
+  benchmark:
+    description: Script-driven benchmark target for a Node.js project.
+    run:
+      cmd:
+        - npm
+        - run
+        - bench
+      runs: 5
+      warmup_runs: 1
+    parse:
+      kind: regex
+      rules:
+        - name: status
+          pattern: "STATUS:\\s*(PASS|FAIL)"
+          type: enum
+          enum: ["PASS", "FAIL"]
+          required: true
+        - name: ops_per_sec
+          pattern: "OPS_PER_SEC:\\s*([0-9.]+)"
+          type: float
+          units: ops_per_sec
+          better: higher
+          required: true
+        - name: latency_ms
+          pattern: "LATENCY_MS:\\s*([0-9.]+)"
+          type: float
+          units: ms
+          better: lower
+          required: true
+    success:
+      exit_code: 0
+      pass_rule: status
