@@ -1,4 +1,5 @@
 # cuda-agent
+[![Tests](https://github.com/bju12290/cuda-agent/actions/workflows/tests.yml/badge.svg)](https://github.com/bju12290/cuda-agent/actions/workflows/tests.yml)
 
 Config-driven build, test, benchmark, compare, and reporting runner for local software projects, with an initial focus on C++/CUDA workflows.
 
