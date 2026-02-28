@@ -1,14 +1,15 @@
 # cuda-agent
 
-`cuda-agent` is a config-driven build, test, benchmark, compare, and reporting runner for local software projects, with an initial focus on C++/CUDA workflows.
+Config-driven build, test, benchmark, compare, and reporting runner for local software projects, with an initial focus on C++/CUDA workflows.
 
-Current status:
+> Current release: MVP 2
 
-- MVP 2 freeze candidate
-- verified baseline pipeline with stored artifacts and reports
-- SQLite-backed run history plus `report` and `compare`
-- generic `run.cmd` support for command-based Python and Node.js workflows
-- executable-discovery support for CUDA-style compiled binaries via `run.exe_glob`
+Highlights:
+
+- reproducible local runs with stored artifacts and summaries
+- SQLite-backed run history plus `runs`, `report`, and `compare`
+- generic `run.cmd` support for Python and Node.js style workflows
+- executable-discovery support via `run.exe_glob` for CUDA-style binaries
 
 The core model is intentionally language-agnostic:
 
@@ -20,12 +21,30 @@ The core model is intentionally language-agnostic:
 - artifact storage
 - policy-based pass/fail rules
 
-Language and toolchain specifics are expected to live in config commands, target definitions, and future adapters or presets. The current examples are CUDA-oriented, but the schema is being kept generic on purpose.
+Language and toolchain specifics live in commands, target definitions, and future adapters or presets. The current examples are CUDA-oriented, but the schema is being kept generic on purpose.
 
 Recommended target style:
 
 - prefer `run.cmd` for new configs
 - use `run.exe_glob` as a convenience mode for compiled executable workflows
+
+## Prerequisites
+
+General:
+
+- Python 3.10+
+- Windows is the primary validated environment for this repo today
+
+For the bundled fixture projects:
+
+- Python is enough for `fixtures/python_smoke`
+- Node.js is required for `fixtures/node_smoke`
+
+For the CUDA sample config:
+
+- Microsoft C++ build tools available on `PATH` as `cl.exe`
+- CUDA toolkit available on `PATH` as `nvcc.exe`
+- an external CUDA samples checkout at the path expected by `cuda_samples.yaml`
 
 ## Install
 
@@ -50,6 +69,10 @@ or the module form:
 ```
 
 ## Quickstart
+
+If you want the least-surprising local validation path, start with the fixture projects in `fixtures/`.
+
+The root `cuda_samples.yaml` file is the primary runnable CUDA example in this repo. The annotated reference template lives at `examples/annotated_cuda_samples.yaml`.
 
 Validate a config:
 
@@ -112,26 +135,17 @@ Not shipped yet:
 - patch loop / autonomous optimization
 - first-class language-specific presets or adapters
 
-Current docs:
+## Documentation
 
 - [Design](docs/design.md)
 - [CLI Reference](docs/cli.md)
 - [Config Schema](docs/config-schema.md)
-- [Release Checklist](docs/release-checklist.md)
+- [Testing Guide](docs/testing.md)
 
-See also:
+## Examples And Fixtures
 
 - [Annotated CUDA Samples Template](examples/annotated_cuda_samples.yaml)
 - [Generic Command Example](examples/python_cmd.yaml)
 - [Node.js Command Example](examples/node_cmd.yaml)
 - [Python Fixture Project](fixtures/python_smoke/agent.yaml)
 - [Node.js Fixture Project](fixtures/node_smoke/agent.yaml)
-
-## Release Positioning
-
-For GitHub release notes and README language, describe this version as:
-
-- a generic local experiment runner
-- initially focused on CUDA workflows
-- already capable of command-based Python and Node.js workflows
-- not yet a profiler-integrated or autonomous optimization system
